@@ -8,7 +8,7 @@ In your environment, run
 ```
 pip install -r requirements.txt
 ```
-The software requires a couple of general-purpose NLP libraries (text preprocessing, NLTK, Sentence Transformers for BERT), which are installed from the requirements file.
+The software requires a couple of general-purpose NLP libraries (text preprocessing, NLTK, BERT), which are installed from the requirements file.
 
 ## Use
 
