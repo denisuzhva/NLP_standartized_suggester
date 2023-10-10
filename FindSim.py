@@ -1,4 +1,5 @@
 import argparse
+from pprint import pprint
 from src.suggester import get_suggestions
 
 
@@ -8,7 +9,21 @@ parser.add_argument('--terms_path', type=str,
                     default='./data/standartized_terms.csv', help='Path to the standartized terms')
 parser.add_argument('--text_path', type=str,
                     default='./data/sample_text.txt', help='Path to the sample text')
+parser.add_argument('-v', '--verbose', action='store_true', default=False)
 args = parser.parse_args()
+
+
+def score_printer(scores, verbose=True):
+    if verbose:
+        for sent, scores_per_sent in scores.items():
+            print(f'{sent}\n')
+            for term, score in scores_per_sent:
+                print(f'\t{term} -> {score}\n')
+    else:
+        for sent, scores_per_sent in scores.items():
+            print(f'{sent}\n')
+            print(
+                f'\t{scores_per_sent[0][0]} -> {scores_per_sent[0][1]}\n')
 
 
 if __name__ == '__main__':
@@ -18,6 +33,6 @@ if __name__ == '__main__':
         terms = f.read().split('\n')
     with open(text_path, 'r') as f:
         text = f.read()
-    pp_terms, pp_text = get_suggestions(terms, text)
-    print(pp_text)
-    print(pp_terms)
+    scores = get_suggestions(terms, text)
+
+    score_printer(scores, verbose=args.verbose)

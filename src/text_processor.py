@@ -32,9 +32,9 @@ def lemmatize_pos_tagged_text(text, lemmatizer, pos_tag_dict):
     for sentence in sentences:
         sentence = sentence.lower()
         new_sentence_words = []  # one pos_tuple for sentence
-        pos_tuples = nltk.pos_tag(nltk.word_tokenize(sentence))
+        pos_tuples = nltk.pos_tag(word_tokenize(sentence))
 
-        for word_idx, word in enumerate(nltk.word_tokenize(sentence)):
+        for word_idx, word in enumerate(word_tokenize(sentence)):
             nltk_word_pos = pos_tuples[word_idx][1]
             wordnet_word_pos = pos_tag_dict.get(nltk_word_pos[0].upper(), None)
             if wordnet_word_pos is not None:
@@ -62,8 +62,11 @@ class NltkPreprocessingSteps:
     _ids = count(0)
 
     def __init__(self, X):
+        """
+        X: list of strings
+        """
         self.id = next(self._ids)
-        self.X = X
+        self.X = X.copy()
         if self.id == 0:
             download_if_non_existent('corpora/stopwords', 'stopwords')
             download_if_non_existent('tokenizers/punkt', 'punkt')
@@ -86,58 +89,59 @@ class NltkPreprocessingSteps:
         self.remove_punctuations = string.punctuation.replace('.', '')
 
     def remove_html_tags(self):
-        self.X = BeautifulSoup(self.X, 'html.parser').get_text()
+        self.X = [BeautifulSoup(x, 'html.parser').get_text()
+                  for x in self.X]
         return self
 
     def replace_diacritics(self):
-        self.X = unidecode(self.X, errors="preserve")
+        self.X = [unidecode(x, errors="preserve") for x in self.X]
         return self
 
     def to_lower(self):
-        self.X = self.X.lower()
+        self.X = [x.lower() for x in self.X]
         return self
 
     def expand_contractions(self):
-        self.X = " ".join([contractions.fix(expanded_word)
-                          for expanded_word in self.X.split()])
+        self.X = [" ".join([contractions.fix(expanded_word)
+                            for expanded_word in x.split()]) for x in self.X]
         return self
 
     def remove_numbers(self):
-        self.X = re.sub(r'\d+', '', self.X)
+        self.X = [re.sub(r'\d+', '', x) for x in self.X]
         return self
 
     def replace_dots_with_spaces(self):
-        self.X = re.sub("[.]", " ", self.X)
+        self.X = [re.sub("[.]", " ", x) for x in self.X]
         return self
 
     def remove_punctuations_except_periods(self):
-        self.X = re.sub('[%s]' %
-                        re.escape(self.remove_punctuations), '', self.X)
+        self.X = [re.sub('[%s]' %
+                         re.escape(self.remove_punctuations), '', x) for x in self.X]
         return self
 
     def remove_all_punctuations(self):
-        self.X = re.sub('[%s]' %
-                        re.escape(string.punctuation), '', self.X)
+        self.X = [re.sub('[%s]' %
+                         re.escape(string.punctuation), '', x) for x in self.X]
         return self
 
     def remove_double_spaces(self):
-        self.X = re.sub(' +', ' ', self.X)
+        self.X = [re.sub(' +', ' ', x) for x in self.X]
         return self
 
     def fix_typos(self):
-        self.X = str(TextBlob(self.X).correct())
+        self.X = [str(TextBlob(x).correct()) for x in self.X]
         return self
 
     def remove_stopwords(self):
         # remove stop words from token list in each column
-        self.X = " ".join([word for word in self.X.split()
-                           if word not in self.sw_nltk])
+        self.X = [" ".join([word for word in x.split()
+                           if word not in self.sw_nltk]) for x in self.X]
         return self
 
     def lemmatize(self):
         lemmatizer = WordNetLemmatizer()
-        self.X = lemmatize_pos_tagged_text(
-            self.X, lemmatizer, self.post_tag_dict)
+        self.X = [lemmatize_pos_tagged_text(
+            x, lemmatizer, self.post_tag_dict) for x in self.X]
         return self
 
     def get_processed_text(self):
